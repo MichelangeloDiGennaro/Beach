@@ -3,40 +3,39 @@
 #include <sys/socket.h> 
 #include <stdlib.h> 
 #include <netinet/in.h> 
-#include <string.h> 
+#include <string.h>
+#include <sys/un.h> 
+#include <sys/socket.h>
+#include<errno.h>
 #include"thpool.h"
 #include"functions.h"
-#define PORT 8080 
+#define SERVER_PATH "/tmp/server"
 
-int main (void){
-    int opt = 1;
-    int sock_client;
-    struct sockaddr_in address;  
-    char* msg = "fanculoH";      
-       
-    if((sock_client = socket(AF_INET, SOCK_STREAM, 0)) < 0){ //socket creation
-        perror("socket failed");
-        exit(-1);
-    }    
+int  main(void){
 
-    address.sin_family = AF_INET;      //localhost connection 
-    address.sin_port = htons( PORT );       
+    int sock_cl;
 
-    if(inet_pton(AF_INET, "127.0.0.1", &address.sin_addr)<=0){ 
-        printf("\nInvalid address/ Address not supported \n"); 
-        return -1; 
+    struct sockaddr* sa;
+    socklen_t sa_lenght;
+    sa = malloc(sizeof(struct sockaddr));
+    sa_lenght = strlen((char* )sa);
+
+    if((sock_cl = socket(AF_UNIX, SOCK_STREAM, 0)) < 0){
+        perror("socket creation error");
+        exit(EXIT_FAILURE); 
+    }
+    
+    sa->sa_family = AF_UNIX ;
+    strncpy (sa->sa_data, SERVER_PATH, sizeof(sa->sa_data));
+
+    while (connect(sock_cl , (struct sockaddr*)&sa , sa_lenght) == -1) {
+        perror("connection to the server failed");
+        exit(EXIT_FAILURE);             
     }
 
-    if (connect(sock_client, (struct sockaddr *)&address, sizeof(address)) < 0){ 
-        printf("\nConnection Failed \n"); 
-        return -1; 
-    } 
-    send(sock_client , msg , strlen(msg) , 0 ); 
-    printf("Hello message sent %s\n", msg);  
-    return 0;  
-    
+write (sock_cl, "Hello!", 7);
+printf("message sended\n");
+close(sock_cl);
 
-    
-    
+return 0;
 }
-

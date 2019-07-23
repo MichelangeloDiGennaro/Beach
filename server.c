@@ -3,55 +3,56 @@
 #include <sys/socket.h> 
 #include <stdlib.h> 
 #include <netinet/in.h> 
-#include <string.h> 
+#include <string.h>
+#include <sys/un.h> 
+#include <sys/socket.h>
 #include"thpool.h"
 #include"functions.h"
-#define PORT 8080 
+#define N 7
+#define SERVER_PATH "/tmp/server"
 
-int main (void){
+int main(void){
+    unlink(SERVER_PATH);
+    struct sockaddr_un stru;
+    int sock_serv, new_sock;
     int opt = 1;
-    int sock_server, new_socket;
-    struct sockaddr_in address;        
-    int addrlen = sizeof(address); 
+    struct sockaddr* cliaddr;
+    char buff[N];
 
-    if((sock_server = socket(AF_INET, SOCK_STREAM, 0)) < 0){ //socket creation
-        perror("socket failed");
-        exit(EXIT_FAILURE);
-    }    
+    cliaddr = malloc(sizeof(struct sockaddr));
+    socklen_t addrlen = strlen((char* )cliaddr);
 
-    address.sin_family = AF_INET;   
-    address.sin_addr.s_addr = INADDR_ANY;   //localhost connection 
-    address.sin_port = htons( PORT );       
+    if((sock_serv = socket(AF_UNIX, SOCK_STREAM, 0)) < 0){
+        printf("socket creation error");
+        exit(-1);
+    }
 
+    bzero(&stru, sizeof(struct sockaddr_in)); 
     
-    if(setsockopt(sock_server, SOL_SOCKET, (SO_REUSEPORT | SO_REUSEADDR), &opt, sizeof(opt)) < 0){   //helps in reuse of address and port
-        perror("setsockopt failed"); 
-        exit(EXIT_FAILURE);
-    } 
-
-
-    if (bind(sock_server, (struct sockaddr *)&address,  sizeof(address))<0){ 
+    stru.sun_family = AF_UNIX ;
+    strncpy (stru.sun_path, SERVER_PATH, sizeof(stru.sun_path));
+    
+    if((bind(sock_serv, (struct sockaddr*) &stru , sizeof(struct sockaddr_un ))) < 0){
         perror("bind failed"); 
         exit(EXIT_FAILURE); 
     }
 
-    if (listen(sock_server, 3) < 0){ 
-        perror("listen"); 
-        exit(EXIT_FAILURE); 
-    } 
-
-    if((new_socket= accept(sock_server, (struct sockaddr *)&address, (socklen_t*)&addrlen) < 0)){
-        perror("accept failed");
+    if(listen(sock_serv, 3) < 0){
+        perror("listen error\n");
         exit(EXIT_FAILURE); 
     }
-    
-    char c[2048]; 
-    memset(&c, 0, sizeof(c));
-    recv(new_socket, &c, 2048, 0);
-    printf("%s", c);
-    // int valread = read(new_socket, c, 5000);
-    // printf("messaggio scritto %s", c);
 
-    return 0;
+    if((new_sock = accept(sock_serv, NULL, 0)) < 0){
+        perror("accept error\n");
+        exit(EXIT_FAILURE); 
+    }
+
+read(new_sock , buff , N ) ;
+printf("Server got: %s\n" , buff) ;
+
+close(sock_serv);
+close(new_sock);
+
+unlink(SERVER_PATH);
+return 0;
 }
-
