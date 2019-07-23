@@ -3,7 +3,7 @@
 #include<pthread.h>
 #include<semaphore.h>
 
-semaphore mutex;
+sem_t mutex;
 
 void* thread_master(){
 
