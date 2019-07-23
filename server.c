@@ -37,7 +37,7 @@ int main(void){
         exit(EXIT_FAILURE); 
     }
 
-    if(listen(sock_serv, 3) < 0){
+    if(listen(sock_serv, SOMAXCONN) < 0){
         perror("listen error\n");
         exit(EXIT_FAILURE); 
     }
@@ -47,12 +47,12 @@ int main(void){
         exit(EXIT_FAILURE); 
     }
 
-read(new_sock , buff , N ) ;
-printf("Server got: %s\n" , buff) ;
+    read(new_sock , buff, N) ;
+    printf("Server got: %s\n" , buff);
 
-close(sock_serv);
-close(new_sock);
+    close(sock_serv);
+    close(new_sock);
 
-unlink(SERVER_PATH);
-return 0;
+    unlink(SERVER_PATH);
+    return 0;
 }

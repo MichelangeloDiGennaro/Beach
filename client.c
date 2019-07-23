@@ -15,27 +15,27 @@ int  main(void){
 
     int sock_cl;
 
-    struct sockaddr* sa;
-    socklen_t sa_lenght;
-    sa = malloc(sizeof(struct sockaddr));
-    sa_lenght = strlen((char* )sa);
+    struct sockaddr sa;
+    
+    
+    
 
     if((sock_cl = socket(AF_UNIX, SOCK_STREAM, 0)) < 0){
         perror("socket creation error");
         exit(EXIT_FAILURE); 
     }
     
-    sa->sa_family = AF_UNIX ;
-    strncpy (sa->sa_data, SERVER_PATH, sizeof(sa->sa_data));
+    sa.sa_family = AF_UNIX ;
+    strncpy (sa.sa_data, SERVER_PATH, sizeof(sa.sa_data));
 
-    while (connect(sock_cl , (struct sockaddr*)&sa , sa_lenght) == -1) {
+    if (connect(sock_cl , (struct sockaddr*)&sa , sizeof(sa)) == -1) {
         perror("connection to the server failed");
         exit(EXIT_FAILURE);             
     }
 
-write (sock_cl, "Hello!", 7);
-printf("message sended\n");
-close(sock_cl);
+    write (sock_cl, "Hello!", 7);
+    printf("message sended\n");
+    close(sock_cl);
 
-return 0;
+    return 0;
 }
